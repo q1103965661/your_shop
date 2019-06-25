@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qf.mapper.OrderMapper">
+    <!--查询所有订单信息  -->
+    <select id="getAllOrderInfo" resultType="com.qf.vo.OrderVo">
+        SELECT * FROM orderinfo
+    </select>
+<!--查询指定订单详情-->
+    <select id="getOrderDetail" parameterType="int" resultType="com.qf.vo.OrderVo">
+        SELECT * FROM order_detail WHERE o_orderid=#{id};
+    </select>
+
+    <!--根据订单号修改订单信息-->
+    <update id="updateOrderInfo" parameterType="com.qf.vo.OrderVo">
+        UPDATE orderinfo set
+            <if test="o_sendtype != null and o_sendtype !=''">
+                o_sendtype = #{o_sendtype},
+            </if>
+            <if test="o_shperson != null and o_shperson !=''">
+                o_shperson = #{o_shperson},
+            </if>
+            <if test="o_province != null and o_province !=''">
+                o_province = #{o_province},
+            </if>
+            <if test="o_city != null and o_city !=''">
+                o_city = #{o_city},
+            </if>
+            <if test="o_district != null and o_district !=''">
+                o_district = #{o_district},
+            </if>
+            <if test="o_shaddress != null and o_shaddress !=''">
+                o_shaddress = #{o_shaddress},
+            </if>
+        o_checkdate = default
+        WHERE id = #{id}
+    </update>
+
+    <!--删除订单-->
+    <delete id="deleteOrderInfo" parameterType="int">
+        DELETE FROM orderinfo WHERE id = #{id}
+    </delete>
+
+
+    <!--条件查询-->
+    <select id="selectOrderBy" resultType="com.qf.vo.OrderVo" parameterType="com.qf.vo.OrderSelected">
+        SELECT * FROM orderinfo
+        <where>
+            <if test="changeStartTime != null and changeStartTime !=''">
+                and o_checkdate &gt; #{changeStartTime}
+            </if>
+            <if test="changeEndTime != null and changeEndTime !=''">
+                and  #{changeEndTime} &gt; o_checkdate
+            </if>
+            <if test="startTime != null and startTime !=''">
+                and o_orderdate &gt; #{startTime}
+            </if>
+            <if test="endTime != null and endTime !=''">
+                and  #{endTime} &gt; o_orderdate
+            </if>
+            <if test="o_status != null and o_status !=''">
+                and  #{o_status} = o_status
+            </if>
+            <if test="str != null and str !=''">
+                and (id like "%"#{str}"%" or
+                o_sendtype like "%"#{str}"%" or
+                o_paytype like "%"#{str}"%" or
+                userId like "%"#{str}"%" or
+                o_shperson like "%"#{str}"%" or
+                o_shphone like "%"#{str}"%" or
+                o_shaddress like "%"#{str}"%"or
+                o_province like "%"#{str}"%" or
+                o_city like "%"#{str}"%" or
+                o_district like "%"#{str}"%"
+                )
+            </if>
+    </where>
+    </select>
+
+    <!--批量删除-->
+    <delete id="deleteSelectOrder" parameterType="list">
+        delete from orderinfo where id in
+        <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!--echartsb表图-->
+    <select id="selectByPlace" resultType="com.qf.vo.OrderVo">
+       SELECT o_province , COUNT(*) AS COUNT
+      FROM orderinfo
+      GROUP BY o_province
+    </select>
+
+    <!--销售总额-->
+    <select id="selectByOrderNum" resultType="com.qf.vo.OrderVo">
+      SELECT COUNT(*) AS allcount,SUM(o_paycount) AS allmoney FROM orderinfo
+    </select>
+
+    <!--销售商品数量-->
+    <select id="selectByGoodsNum" resultType="com.qf.vo.OrderVo">
+    SELECT SUM(g_num) AS allgoods FROM order_detail;
+    </select>
+
+    <select id="getAllRefund" resultType="com.qf.vo.OrderVo">
+ SELECT o.id,o.o_sendtype,o.o_paytype,o.o_paycount,o.o_shperson,o.o_shphone,o.o_shaddress,o.o_province,o.o_city,o.o_district,o.o_orderdate,o.o_status FROM orderinfo o,refund r
+        WHERE o.id=r.r_orderid;
+    </select>
+
+    <select id="getRefundInfoById" parameterType="int" resultType="com.qf.vo.RefundVo">
+     SELECT * FROM refund WHERE r_orderid=#{id};
+    </select>
+
+    <update id="insertNOInfoById" parameterType="com.qf.vo.RefundVo" >
+         UPDATE refund SET r_return=#{r_return} WHERE r_orderid=#{r_orderid};
+    </update>
+
+    <update id="updateRefundInfoById" parameterType="int" >
+         UPDATE refund SET r_remoney='已退款' WHERE r_orderid=#{id};
+    </update>
+
+
+</mapper>
